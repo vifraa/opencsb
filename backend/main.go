@@ -22,11 +22,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	widget, err := fetchCsbWidget("aptuslogin@APTUSPORT")
+	err = loginAptusPort()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(widget)
 }
 
 func loginCbs(username, password string) error {
@@ -37,13 +36,13 @@ func loginCbs(username, password string) error {
 	v.Add("pwd", password)
 	v.Add("redirect_to", "https://www.chalmersstudentbostader.se/min-bostad/")
 
-	resp, err := client.PostForm(u, v)
+	res, err := client.PostForm(u, v)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer res.Body.Close()
 
-	correctLogin := loginCookieSet(resp.Request.URL)
+	correctLogin := cookieIsSet("Fast2User_ssoId", res.Request.URL)
 	if correctLogin {
 		return nil
 	} else {
@@ -51,15 +50,50 @@ func loginCbs(username, password string) error {
 	}
 }
 
-func loginCookieSet(u *url.URL) bool {
+func loginAptusPort() error {
+	url, err := getAptusportLogin()
+	if err != nil {
+		return err
+	}
+	fmt.Println(url)
+
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("User-Agent", "opencbs")
+
+	res, err := client.Do(req)
+	//res, err := client.Get(url)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	correctLogin := cookieIsSet(".ASPXAUTH=", res.Request.URL)
+	if correctLogin {
+		return nil
+	} else {
+		return errors.New("invalid aptus login")
+	}
+}
+
+func cookieIsSet(name string, u *url.URL) bool {
 	isSet := false
 	for _, c := range client.Jar.Cookies(u) {
-		if c.Name == "Fast2User_ssoId" {
+		fmt.Println(c.Name)
+		if c.Name == name {
 			isSet = true
 		}
 
 	}
+	fmt.Println("")
 	return isSet
+}
+
+func getAptusportLogin() (string, error) {
+	widgetRes, err := fetchCsbWidget("aptuslogin@APTUSPORT")
+	if err != nil {
+		return "", err
+	}
+	return widgetRes.Data.Aptuslogin_APTUSPORT.Objekt[0].AptusURL, nil
 }
 
 func fetchCsbWidget(widgetName string) (CSBWidgetResponse, error) {
@@ -75,14 +109,14 @@ func fetchCsbWidget(widgetName string) (CSBWidgetResponse, error) {
 	q.Add("callback", "jQuery")
 	q.Add("widgets[]", widgetName)
 	req.URL.RawQuery = q.Encode()
-	fmt.Println(req.URL.String())
 
-	resp, err := client.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
 		return widgetRes, err
 	}
+	defer res.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return widgetRes, err
 	}
@@ -91,9 +125,10 @@ func fetchCsbWidget(widgetName string) (CSBWidgetResponse, error) {
 	s := string(data)
 	s = s[7 : len(s)-2]
 
-	json.Unmarshal([]byte(s), &widgetRes)
-
-	fmt.Println(widgetRes)
+	err = json.Unmarshal([]byte(s), &widgetRes)
+	if err != nil {
+		return widgetRes, err
+	}
 
 	return widgetRes, nil
 }
