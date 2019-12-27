@@ -121,7 +121,6 @@ func getAptusportLogin() (string, error) {
 		return "", err
 	}
 
-	// query escape the queries in the url to be able to be used without problems.
 	url := widgetRes.Data.Aptuslogin_APTUSPORT.Objekt[0].AptusURL
 	url = strings.ReplaceAll(url, " ", "+")
 
