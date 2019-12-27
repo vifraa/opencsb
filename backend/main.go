@@ -9,12 +9,19 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"strings"
 )
 
 var jar, _ = cookiejar.New(nil)
 
 var client = &http.Client{
 	Jar: jar,
+}
+var noRedirectClient = &http.Client{
+	Jar: jar,
+	CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	},
 }
 
 func main() {
@@ -26,6 +33,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = openDoor("")
+	log.Fatal(err)
+
 }
 
 func loginCbs(username, password string) error {
@@ -57,34 +68,50 @@ func loginAptusPort() error {
 	}
 	fmt.Println(url)
 
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", "opencbs")
-
-	res, err := client.Do(req)
-	//res, err := client.Get(url)
+	res, err := noRedirectClient.Get(url)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
 
-	correctLogin := cookieIsSet(".ASPXAUTH=", res.Request.URL)
-	if correctLogin {
-		return nil
-	} else {
-		return errors.New("invalid aptus login")
+	// TODO Need to check for below cookie. is not set on res.Request.Url thought.
+	return nil
+	//correctLogin := cookieIsSet(".ASPXAUTH", res.Request.URL)
+	//if correctLogin {
+	//	return nil
+	//} else {
+	//	return errors.New("invalid aptus login")
+	//}
+}
+
+func openDoor(id string) error {
+	if id == "" {
+		id = "123640"
 	}
+	url := "https://apt-www.chalmersstudentbostader.se/AptusPortal/Lock/UnlockEntryDoor/" + id
+	res, err := noRedirectClient.Get(url)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	b, _ := ioutil.ReadAll(res.Body)
+	fmt.Println(string(b))
+	if res.StatusCode != http.StatusOK {
+		return errors.New("unable to open door" + string(b))
+	}
+
+	return nil
 }
 
 func cookieIsSet(name string, u *url.URL) bool {
 	isSet := false
 	for _, c := range client.Jar.Cookies(u) {
-		fmt.Println(c.Name)
 		if c.Name == name {
 			isSet = true
 		}
 
 	}
-	fmt.Println("")
 	return isSet
 }
 
@@ -93,7 +120,13 @@ func getAptusportLogin() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return widgetRes.Data.Aptuslogin_APTUSPORT.Objekt[0].AptusURL, nil
+
+	// query escape the queries in the url to be able to be used without problems.
+	urlString := widgetRes.Data.Aptuslogin_APTUSPORT.Objekt[0].AptusURL
+	qp := strings.SplitAfterN(urlString, "?", 2)
+	u := qp[0] + url.QueryEscape(qp[1])
+
+	return u, nil
 }
 
 func fetchCsbWidget(widgetName string) (CSBWidgetResponse, error) {
