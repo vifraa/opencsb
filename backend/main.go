@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -34,7 +33,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = openDoor("")
+	err = openDoor("123640")
 	log.Fatal(err)
 
 }
@@ -66,7 +65,6 @@ func loginAptusPort() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(url)
 
 	res, err := noRedirectClient.Get(url)
 	if err != nil {
@@ -74,19 +72,17 @@ func loginAptusPort() error {
 	}
 	defer res.Body.Close()
 
-	// TODO Need to check for below cookie. is not set on res.Request.Url thought.
-	return nil
-	//correctLogin := cookieIsSet(".ASPXAUTH", res.Request.URL)
-	//if correctLogin {
-	//	return nil
-	//} else {
-	//	return errors.New("invalid aptus login")
-	//}
+	correctLogin := cookieIsSet(".ASPXAUTH", res.Request.URL)
+	if correctLogin {
+		return nil
+	} else {
+		return errors.New("invalid aptus login")
+	}
 }
 
 func openDoor(id string) error {
 	if id == "" {
-		id = "123640"
+		return errors.New("invalid door id")
 	}
 	url := "https://apt-www.chalmersstudentbostader.se/AptusPortal/Lock/UnlockEntryDoor/" + id
 	res, err := noRedirectClient.Get(url)
@@ -96,7 +92,7 @@ func openDoor(id string) error {
 	defer res.Body.Close()
 
 	b, _ := ioutil.ReadAll(res.Body)
-	fmt.Println(string(b))
+	//fmt.Println(string(b))
 	if res.StatusCode != http.StatusOK {
 		return errors.New("unable to open door" + string(b))
 	}
