@@ -122,11 +122,10 @@ func getAptusportLogin() (string, error) {
 	}
 
 	// query escape the queries in the url to be able to be used without problems.
-	urlString := widgetRes.Data.Aptuslogin_APTUSPORT.Objekt[0].AptusURL
-	qp := strings.SplitAfterN(urlString, "?", 2)
-	u := qp[0] + url.QueryEscape(qp[1])
+	url := widgetRes.Data.Aptuslogin_APTUSPORT.Objekt[0].AptusURL
+	url = strings.ReplaceAll(url, " ", "+")
 
-	return u, nil
+	return url, nil
 }
 
 func fetchCsbWidget(widgetName string) (CSBWidgetResponse, error) {
