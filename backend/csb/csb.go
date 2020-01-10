@@ -1,4 +1,4 @@
-package cbs
+package csb
 
 import (
 	"encoding/json"
@@ -8,6 +8,8 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 var jar, _ = cookiejar.New(nil)
@@ -83,6 +85,43 @@ func OpenDoor(id string) error {
 	return nil
 }
 
+func FetchDoorIDs() ([]Door, error) {
+	url := "https://apt-www.chalmersstudentbostader.se/AptusPortal/Lock"
+	res, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	doors := make([]Door, 0)
+
+	// Parse html to find plain text door name and id
+	doc.Find(".lockCard.animation").Each(func(i int, s *goquery.Selection) {
+		btn := s.Find("button")
+		btnId, found := btn.Attr("id")
+		if !found {
+			return
+		}
+
+		splitted := strings.Split(btnId, "_")
+		name := s.Find("span").Text()
+
+		if len(splitted) == 2 {
+			door := Door{
+				ID:   splitted[1],
+				Name: name,
+			}
+			doors = append(doors, door)
+		}
+	})
+
+	return doors, nil
+}
+
 func cookieIsSet(name string, u *url.URL) bool {
 	isSet := false
 	for _, c := range client.Jar.Cookies(u) {
@@ -141,6 +180,11 @@ func fetchCsbWidget(widgetName string) (CSBWidgetResponse, error) {
 	}
 
 	return widgetRes, nil
+}
+
+type Door struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type CSBWidgetResponse struct {
