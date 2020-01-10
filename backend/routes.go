@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/vifraa/opencbs/cbs"
+	"github.com/vifraa/opencsb/csb"
 )
 
 func (s *server) routes() {
@@ -38,19 +38,19 @@ func (s *server) handleDoorOpen() http.HandlerFunc {
 			return
 		}
 
-		err = cbs.LoginCbs(doorReq.Username, doorReq.Password)
+		err = csb.LoginCbs(doorReq.Username, doorReq.Password)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		err = cbs.LoginAptusPort()
+		err = csb.LoginAptusPort()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		err = cbs.OpenDoor(doorReq.DoorID)
+		err = csb.OpenDoor(doorReq.DoorID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -70,19 +70,19 @@ func (s *server) handleDoorGetAll() http.HandlerFunc {
 			return
 		}
 
-		err = cbs.LoginCbs(doorReq.Username, doorReq.Password)
+		err = csb.LoginCbs(doorReq.Username, doorReq.Password)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		err = cbs.LoginAptusPort()
+		err = csb.LoginAptusPort()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		doors, err := cbs.FetchDoorIDs()
+		doors, err := csb.FetchDoorIDs()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}

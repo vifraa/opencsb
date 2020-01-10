@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/vifraa/opencbs/cbs"
+	"github.com/vifraa/opencsb/csb"
 )
 
 func main() {
@@ -33,23 +33,23 @@ func run() error {
 }
 
 func testOpenDoor() {
-	err := cbs.LoginCbs("9802089251", "k3EfVSamW&W8F^")
+	err := csb.LoginCbs("9802089251", "k3EfVSamW&W8F^")
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("logged in")
 
-	err = cbs.LoginAptusPort()
+	err = csb.LoginAptusPort()
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("aptus port logged in")
-	//	err = cbs.OpenDoor("123640")
+	//	err = csb.OpenDoor("123640")
 	//	if err != nil {
 	//		log.Fatal(err)
 	//	}
 
-	ids, err := cbs.FetchDoorIDs()
+	ids, err := csb.FetchDoorIDs()
 	if err != nil {
 		log.Fatal(err)
 	}
