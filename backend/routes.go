@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/pkg/errors"
 	"github.com/vifraa/opencbs/cbs"
 )
 
@@ -19,56 +18,81 @@ func (s *server) routes() {
 
 	s.router.Get("/", s.handleIndex())
 
-	s.router.Post("/door", s.handleDoorOpen())
-
-	//exerciseStore := SqlExerciseStore{
-	//	db: s.db,
-	//}
-	//s.router.Get("/exercises/{id}", s.handleExerciseGet(exerciseStore))
-	//s.router.Post("/exercises", s.handleExerciseCreate(exerciseStore))
+	// TODO Instead of taking the login info each time in post request, have a login endpoint instead.
+	s.router.Post("/doors/open", s.handleDoorOpen())
+	s.router.Post("/doors", s.handleDoorGetAll())
 }
 
 func (s *server) handleIndex() http.HandlerFunc {
-	//preparations here, can insert arguments
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.respond(w, r, "Hello World", http.StatusOK)
 	}
 }
 
 func (s *server) handleDoorOpen() http.HandlerFunc {
-	type DoorOpenRequest struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-		DoorID   string `json:"doorId"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		doorReq := &DoorOpenRequest{}
 		err := s.decode(w, r, doorReq)
 		if err != nil {
-			s.respond(w, r, errors.Wrap(err, "invalid json"), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		err = cbs.LoginCbs(doorReq.Username, doorReq.Password)
 		if err != nil {
-			s.respond(w, r, err, http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		err = cbs.LoginAptusPort()
 		if err != nil {
-			s.respond(w, r, err, http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		err = cbs.OpenDoor(doorReq.DoorID)
 		if err != nil {
-			s.respond(w, r, err, http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
-		s.respond(w, r, "Door opened", http.StatusBadRequest)
+		s.respond(w, r, "Door opened", http.StatusOK)
 	}
 }
 
-//handleTaskCreate
-//handleTaskDone
-//handleTaskGet
-//...
+// TODO Alot of code duplication between these two methods, need to refactor.
+func (s *server) handleDoorGetAll() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		doorReq := &DoorOpenRequest{}
+		err := s.decode(w, r, doorReq)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = cbs.LoginCbs(doorReq.Username, doorReq.Password)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = cbs.LoginAptusPort()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		doors, err := cbs.FetchDoorIDs()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		s.respond(w, r, doors, http.StatusOK)
+	}
+}
+
+type DoorOpenRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	DoorID   string `json:"doorId"`
+}
