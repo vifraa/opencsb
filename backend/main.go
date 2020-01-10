@@ -15,7 +15,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
-
 }
 
 func run() error {
@@ -38,13 +37,23 @@ func testOpenDoor() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("logged in")
+
 	err = cbs.LoginAptusPort()
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("aptus port logged in")
+	//	err = cbs.OpenDoor("123640")
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
 
-	err = cbs.OpenDoor("123640")
+	ids, err := cbs.FetchDoorIDs()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Printf("Found door ids: %s", ids)
+
 }
