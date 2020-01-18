@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 	"github.com/gorilla/securecookie"
 	"github.com/vifraa/opencsb/csb"
 	"github.com/vifraa/opencsb/user"
@@ -19,6 +20,22 @@ const sessionName = "opencsb-session"
 
 func (s *server) routes() {
 	s.router = chi.NewMux()
+
+	// TODO Configure cors properly. Currently copied from go-chi/cors to be able to develop from frontend.
+	// dont use this configuration in public.
+	// Basic CORS
+	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
+	cors := cors.New(cors.Options{
+		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
+		AllowedOrigins: []string{"*"},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	})
+	s.router.Use(cors.Handler)
 
 	s.router.Use(middleware.Logger)
 	s.router.Use(middleware.RequestID)
