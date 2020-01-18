@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/vifraa/opencsb/csb"
+	"github.com/vifraa/opencsb/user"
 )
 
 func main() {
@@ -19,6 +20,7 @@ func main() {
 
 func run() error {
 	srv := newServer()
+	srv.userRepository = user.NewMapRepository()
 
 	s := &http.Server{
 		Addr:           "0.0.0.0:8080",

@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/vifraa/opencsb/user"
 	"github.com/go-chi/chi"
 )
 
 type server struct {
 	router *chi.Mux
+	userRepository user.Repository
 }
 
 func newServer() *server {
