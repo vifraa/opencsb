@@ -1,33 +1,32 @@
 <script>
     import Login from './Login.svelte'
-    export let name;
 
-    
 </script>
 
-<main>
-    <Login/>
+<main class="full-height">
+    <div class="container">
+        <div class="d-flex flex-column justify-content-center align-items-center full-height">
+            <Login/>
+        </div>
+    </div>
 </main>
 
 <style>
-    
-	main {
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-		margin: 0 auto;
-	}
+ 
+    .full-height {
+        height: 100%;
+    }
 
-	h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
-	}
+    .container {
+        height: 100%;
 
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	}
+    }
+    /* 
+       main {
+           text-align: center;
+           padding: 1em;
+           max-width: 240px;
+           margin: 0 auto;
+       }
+     */	
 </style>
