@@ -60,6 +60,7 @@ func (s *server) handleLogin() http.HandlerFunc {
 		s.userRepository.Update(u)
 
 		setSession(username, w)
+		s.respond(w, r, "Logged in succesfully", http.StatusOK)
 	}
 }
 
