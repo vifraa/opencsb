@@ -1,9 +1,19 @@
 <script>
 
     async function handleLogin(event) {
-        console.log(event)
-        console.log(event.target.username.value)
-        console.log(event.target.password.value)
+
+
+        const formData = new FormData();
+        formData.append('username', event.target.username.value)
+        formData.append('password', event.target.password.value)
+
+        await fetch('http://0.0.0.0:8080/login', {
+            method: 'POST',
+            body: formData
+        })
+            .then((res) => res.json())
+            .then((response) => console.log(response)); 
+            
     }
 
 </script>
@@ -12,12 +22,14 @@
 <div class="login-container">
     <h1>Login</h1>
     <form on:submit|preventDefault="{handleLogin}"
-        class="d-flex flex-column justify-content-center align-items-center">
+          class="d-flex flex-column justify-content-center align-items-center">
         <input type="text" id="username" required placeholder="Username">
         <input type="password" id="password" required placeholder="Password">
         <button type="submit" class="btn btn-primary">Login</button>
     </form>
 </div>
+
+
 
 <style>
     .login-container {
